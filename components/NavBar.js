@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const LINKS = [
   { href: "/", label: "Card Database" },
   { href: "/deck-builder", label: "Deck Builder" },
+  { href: "/recommended-decks", label: "Recommended Decks" },
 ];
 
 export default function NavBar() {

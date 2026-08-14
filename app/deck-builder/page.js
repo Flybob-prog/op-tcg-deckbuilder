@@ -13,13 +13,14 @@ import {
   createEmptyDeck,
   removeCard,
   setLeader,
+  STORAGE_KEY,
 } from "@/lib/deck";
 
-// Deck-in-progress is saved to the browser's localStorage under this key
-// so it survives page refreshes. There's no backend/account system yet,
-// so this is the simplest thing that works for a single person building
-// a deck on their own machine — see lib/deck.js for the deck shape.
-const STORAGE_KEY = "optcg-deck";
+// Deck-in-progress is saved to the browser's localStorage under
+// STORAGE_KEY (see lib/deck.js) so it survives page refreshes. There's
+// no backend/account system yet, so this is the simplest thing that
+// works for a single person building a deck on their own machine — see
+// lib/deck.js for the deck shape.
 
 export default function DeckBuilder() {
   const { allCards, status } = useCards();
