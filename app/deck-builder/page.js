@@ -4,17 +4,22 @@ import { useCallback, useEffect, useState } from "react";
 import CardFilters from "@/components/CardFilters";
 import CardGrid from "@/components/CardGrid";
 import DeckPanel from "@/components/DeckPanel";
+import DeckImport from "@/components/DeckImport";
 import { useCards } from "@/hooks/useCards";
 import { useCardFilters } from "@/hooks/useCardFilters";
+import { useCollection } from "@/hooks/useCollection";
 import {
   addCard,
   canAddCard,
   clearDeck,
   createEmptyDeck,
+  isPlayableWithLeader,
   removeCard,
   setLeader,
   STORAGE_KEY,
 } from "@/lib/deck";
+import { getOwnedCount } from "@/lib/collection";
+import { filterCards } from "@/lib/optcg";
 
 // Deck-in-progress is saved to the browser's localStorage under
 // STORAGE_KEY (see lib/deck.js) so it survives page refreshes. There's
@@ -37,6 +42,15 @@ export default function DeckBuilder() {
 
   const [deck, setDeck] = useState(createEmptyDeck());
   const [deckLoaded, setDeckLoaded] = useState(false);
+  const { collection } = useCollection();
+  const [onlyOwned, setOnlyOwned] = useState(false);
+  // The builder runs in two steps:
+  //   1. "leader": only Leader cards are shown; pick one.
+  //   2. "cards": only cards playable with that Leader are shown.
+  // The step is derived from whether a Leader is set, plus this flag for
+  // when someone with a Leader clicks "Change Leader" to go back to 1.
+  const [changingLeader, setChangingLeader] = useState(false);
+  const step = deck.leader && !changingLeader ? "cards" : "leader";
 
   // Load any previously-saved deck once, on mount (client-only —
   // localStorage doesn't exist during server rendering). This is exactly
@@ -78,10 +92,17 @@ export default function DeckBuilder() {
 
   const handleSetLeader = useCallback((card) => {
     setDeck((current) => setLeader(current, card));
+    setChangingLeader(false);
+  }, []);
+
+  const handleImport = useCallback((importedDeck) => {
+    setDeck(importedDeck);
+    setChangingLeader(false);
   }, []);
 
   const handleClear = useCallback(() => {
     setDeck(clearDeck());
+    setChangingLeader(false);
   }, []);
 
   const builder = {
@@ -93,13 +114,42 @@ export default function DeckBuilder() {
     onSetLeader: handleSetLeader,
   };
 
+  // Read-only here (no onIncrement/onDecrement) — editing what you own
+  // happens on the Collection page (/collection). This just shows the
+  // count so you can see what you physically have while building.
+  const collectionDisplay = {
+    getCount: (card) => getOwnedCount(collection, card),
+  };
+
+  const ownedOk = (card) =>
+    !onlyOwned || getOwnedCount(collection, card) > 0;
+
+  // Step 1 ignores the Type dropdown (it's always Leaders here), so a
+  // leftover "Character" type filter can't leave the list empty.
+  const gridCards =
+    step === "leader"
+      ? filterCards(allCards, { ...filters, type: "" }).filter(
+          (card) => card.card_type === "Leader" && ownedOk(card)
+        )
+      : filteredCards.filter(
+          (card) => isPlayableWithLeader(deck.leader, card) && ownedOk(card)
+        );
+
+  const deckCardCount = Object.values(deck.cards).reduce(
+    (sum, entry) => sum + entry.count,
+    0
+  );
+
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-8">
       <header>
         <h1 className="text-2xl font-semibold">Deck Builder</h1>
         <p className="text-neutral-500 dark:text-neutral-400">
-          Pick a Leader, then add up to 50 cards that share its color.
-          Your deck saves automatically in this browser.
+          Step 1: pick a Leader. Step 2: add 50 cards that share its
+          color. Your deck saves automatically in this browser. Each card shows
+          how many copies you own (from{" "}
+          <span className="underline">My Collection</span>), so you can
+          build with cards you actually have.
         </p>
       </header>
 
@@ -118,6 +168,71 @@ export default function DeckBuilder() {
       {status === "ready" && (
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
           <div className="flex flex-1 flex-col gap-6">
+            <DeckImport
+              allCards={allCards}
+              hasExistingDeck={Boolean(deck.leader) || deckCardCount > 0}
+              onImport={handleImport}
+            />
+
+            <ol className="flex flex-wrap items-center gap-2 text-sm">
+              <li
+                className={`rounded-full px-3 py-1 font-medium ${
+                  step === "leader"
+                    ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                    : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+                }`}
+              >
+                1. Choose a Leader
+              </li>
+              <li aria-hidden="true" className="text-neutral-400">
+                &rarr;
+              </li>
+              <li
+                className={`rounded-full px-3 py-1 font-medium ${
+                  step === "cards"
+                    ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                    : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+                }`}
+              >
+                2. Add cards
+              </li>
+            </ol>
+
+            {step === "leader" ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-800 dark:bg-neutral-900">
+                <p className="text-neutral-700 dark:text-neutral-300">
+                  {deck.leader
+                    ? "Pick a new Leader. Cards in your deck that don't share its color will be removed."
+                    : "Start by picking the Leader for your deck. Click \"Set as Leader\" on any card below."}
+                </p>
+                {deck.leader && (
+                  <button
+                    type="button"
+                    onClick={() => setChangingLeader(false)}
+                    className="rounded-md border border-neutral-300 px-3 py-2 text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                  >
+                    Keep {deck.leader.card_name}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-800 dark:bg-neutral-900">
+                <p className="text-neutral-700 dark:text-neutral-300">
+                  Leader:{" "}
+                  <span className="font-semibold">{deck.leader.card_name}</span>{" "}
+                  ({deck.leader.card_color}). Showing only cards you can
+                  use with this Leader. {deckCardCount}/50 cards added.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setChangingLeader(true)}
+                  className="rounded-md border border-neutral-300 px-3 py-2 text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                >
+                  Change Leader
+                </button>
+              </div>
+            )}
+
             <CardFilters
               filters={filters}
               onChange={setFilters}
@@ -126,15 +241,30 @@ export default function DeckBuilder() {
               costOptions={costOptions}
               printTagOptions={printTagOptions}
               rarityOptions={rarityOptions}
-              resultCount={filteredCards.length}
+              resultCount={gridCards.length}
             />
-            <CardGrid cards={filteredCards} builder={builder} />
+            <label className="flex w-fit items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
+              <input
+                type="checkbox"
+                checked={onlyOwned}
+                onChange={(e) => setOnlyOwned(e.target.checked)}
+                className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-700"
+              />
+              Only show cards I own (from{" "}
+              <span className="underline">My Collection</span>)
+            </label>
+            <CardGrid
+              cards={gridCards}
+              builder={builder}
+              collection={collectionDisplay}
+            />
           </div>
 
           <DeckPanel
             deck={deck}
             onRemoveCard={handleRemoveById}
             onClearDeck={handleClear}
+            getOwnedCount={(card) => getOwnedCount(collection, card)}
           />
         </div>
       )}
