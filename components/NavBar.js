@@ -5,8 +5,10 @@ import { usePathname } from "next/navigation";
 
 const LINKS = [
   { href: "/", label: "Card Database" },
+  { href: "/collection", label: "My Collection" },
   { href: "/deck-builder", label: "Deck Builder" },
   { href: "/recommended-decks", label: "Recommended Decks" },
+  { href: "/starter-decks", label: "Starter Decks" },
 ];
 
 export default function NavBar() {

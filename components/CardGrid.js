@@ -27,8 +27,19 @@ import { hasUnlimitedCopies } from "@/lib/deck";
  *   canAdd(card) => { ok, reason } — see lib/deck.js's canAddCard,
  *   onAdd(card), onRemove(card), onSetLeader(card),
  * }
+ *
+ * Pass a `collection` prop to show/edit how many copies you physically
+ * own (used by the Collection page, and read-only on the Deck Builder
+ * page so you can see what you have while building — see
+ * lib/collection.js):
+ *
+ * collection = {
+ *   getCount(card) => number of copies you own,
+ *   onIncrement(card), onDecrement(card) — omit both for a read-only
+ *     "Owned: N" display instead of +/- steppers,
+ * }
  */
-export default function CardGrid({ cards, builder }) {
+export default function CardGrid({ cards, builder, collection }) {
   if (cards.length === 0) {
     return (
       <p className="py-12 text-center text-neutral-500 dark:text-neutral-400">
@@ -45,6 +56,10 @@ export default function CardGrid({ cards, builder }) {
         const { ok: canAdd, reason: addBlockedReason } = builder
           ? builder.canAdd(card)
           : { ok: false, reason: null };
+        const ownedCount = collection?.getCount(card) ?? 0;
+        const collectionEditable = Boolean(
+          collection?.onIncrement && collection?.onDecrement
+        );
 
         return (
           <div
@@ -92,6 +107,40 @@ export default function CardGrid({ cards, builder }) {
                 <p className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400">
                   No 4-copy limit
                 </p>
+              )}
+
+              {collection && (
+                <div className="mt-1 flex items-center justify-between gap-2 border-t border-neutral-100 pt-1 dark:border-neutral-800">
+                  <span className="text-[10px] font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                    Owned
+                  </span>
+                  {collectionEditable ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => collection.onDecrement(card)}
+                        disabled={ownedCount === 0}
+                        aria-label={`Remove one owned copy of ${card.card_name}`}
+                        className="rounded-md border border-neutral-300 px-1.5 py-0.5 text-xs font-medium hover:bg-neutral-100 disabled:cursor-default disabled:text-neutral-300 disabled:hover:bg-transparent dark:border-neutral-700 dark:hover:bg-neutral-800 dark:disabled:text-neutral-700"
+                      >
+                        &minus;
+                      </button>
+                      <span className="w-5 text-center text-xs font-semibold">
+                        {ownedCount}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => collection.onIncrement(card)}
+                        aria-label={`Add one owned copy of ${card.card_name}`}
+                        className="rounded-md border border-neutral-300 px-1.5 py-0.5 text-xs font-medium hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-xs font-semibold">{ownedCount}</span>
+                  )}
+                </div>
               )}
 
               {builder && card.card_type === "Leader" && (
