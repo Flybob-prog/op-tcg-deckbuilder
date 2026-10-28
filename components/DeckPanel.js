@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { DECK_SIZE, totalCardCount, validateDeck } from "@/lib/deck";
 import { exportDeckList } from "@/lib/importDeck";
+import BuyDeckPanel from "@/components/BuyDeckPanel";
 
 /**
  * Side panel showing the deck currently being built: the Leader slot,
@@ -189,6 +190,8 @@ export default function DeckPanel({
           </p>
         </div>
       )}
+
+      <BuyDeckPanel deck={deck} getOwnedCount={getOwnedCount} />
 
       <div
         className={`rounded-md p-3 text-sm ${
