@@ -1,12 +1,16 @@
 "use client";
 
+import { useMemo } from "react";
 import CardFilters from "@/components/CardFilters";
 import CardGrid from "@/components/CardGrid";
 import { useCards } from "@/hooks/useCards";
 import { useCardFilters } from "@/hooks/useCardFilters";
+import { sortCardsNewestFirst } from "@/lib/optcg";
 
 export default function Home() {
-  const { allCards, status } = useCards();
+  const { allCards: rawCards, status } = useCards();
+  // Newest sets first, same as the Deck Builder (see lib/optcg.js).
+  const allCards = useMemo(() => sortCardsNewestFirst(rawCards), [rawCards]);
   const {
     filters,
     setFilters,
