@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import CardFilters from "@/components/CardFilters";
 import CardGrid from "@/components/CardGrid";
 import DeckPanel from "@/components/DeckPanel";
 import DeckImport from "@/components/DeckImport";
+import SuggestionsPanel from "@/components/SuggestionsPanel";
 import { useCards } from "@/hooks/useCards";
 import { useCardFilters } from "@/hooks/useCardFilters";
 import { useCollection } from "@/hooks/useCollection";
@@ -20,6 +21,7 @@ import {
 } from "@/lib/deck";
 import { getOwnedCount } from "@/lib/collection";
 import { filterCards } from "@/lib/optcg";
+import { buildCardIndex } from "@/lib/suggestions";
 
 // Deck-in-progress is saved to the browser's localStorage under
 // STORAGE_KEY (see lib/deck.js) so it survives page refreshes. There's
@@ -123,6 +125,15 @@ export default function DeckBuilder() {
 
   const ownedOk = (card) =>
     !onlyOwned || getOwnedCount(collection, card) > 0;
+
+  // For the suggestions panel (see lib/suggestions.js). The index only
+  // depends on the card list, so it's built once rather than per render.
+  const cardIndex = useMemo(() => buildCardIndex(allCards), [allCards]);
+  const suggestionFilter = useMemo(
+    () =>
+      onlyOwned ? (card) => getOwnedCount(collection, card) > 0 : undefined,
+    [onlyOwned, collection]
+  );
 
   // Step 1 ignores the Type dropdown (it's always Leaders here), so a
   // leftover "Character" type filter can't leave the list empty.
@@ -231,6 +242,17 @@ export default function DeckBuilder() {
                   Change Leader
                 </button>
               </div>
+            )}
+
+            {step === "cards" && (
+              <SuggestionsPanel
+                deck={deck}
+                cardIndex={cardIndex}
+                canAdd={(card) => canAddCard(deck, card)}
+                onAdd={handleAdd}
+                getOwnedCount={(card) => getOwnedCount(collection, card)}
+                filter={suggestionFilter}
+              />
             )}
 
             <CardFilters

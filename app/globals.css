@@ -1,21 +1,30 @@
 @import "tailwindcss";
 
+/* Moo-Fly brand (hexagon adult logo set) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf6ec;
+  --foreground: #1b2532;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-moo-navy: #213b56;
+  --color-moo-deep: #0d1b2a;
+  --color-moo-gold: #c5a04a;
+  --color-moo-parchment: #f1ead8;
+  --color-moo-oxblood: #8e1b22;
+  --color-moo-sandy: #d49a5a;
+  --color-moo-highland: #7a3c1e;
   --font-sans: ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
+  --font-display: var(--font-zilla), Rockwell, Georgia, serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0d1b2a;
+    --foreground: #f1ead8;
   }
 }
 
@@ -23,4 +32,12 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+  }
 }

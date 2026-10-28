@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -15,22 +16,43 @@ export default function NavBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="border-b border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
-      <div className="mx-auto flex w-full max-w-7xl items-center gap-4 px-4 py-3">
-        <span className="font-semibold">OP TCG</span>
-        {LINKS.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`text-sm ${
-              pathname === link.href
-                ? "font-medium text-neutral-900 dark:text-neutral-100"
-                : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
-            }`}
-          >
-            {link.label}
-          </Link>
-        ))}
+    <nav className="border-b-2 border-moo-gold bg-moo-navy text-moo-parchment">
+      <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2">
+        <Link href="/" className="mr-2 flex items-center gap-3" aria-label="Moo-Fly deck builder home">
+          <Image
+            src="/brand/moofly-badge.svg"
+            alt=""
+            width={48}
+            height={48}
+            unoptimized
+            priority
+          />
+          <Image
+            src="/brand/moofly-nameplate.svg"
+            alt="Moo-Fly"
+            width={154}
+            height={32}
+            unoptimized
+            priority
+          />
+        </Link>
+        {LINKS.map((link) => {
+          const active = pathname === link.href;
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              aria-current={active ? "page" : undefined}
+              className={`border-b-2 py-1 text-sm ${
+                active
+                  ? "border-moo-gold font-semibold text-moo-gold"
+                  : "border-transparent text-moo-parchment/80 hover:text-moo-parchment"
+              }`}
+            >
+              {link.label}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
