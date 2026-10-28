@@ -20,7 +20,7 @@ import {
   STORAGE_KEY,
 } from "@/lib/deck";
 import { getOwnedCount } from "@/lib/collection";
-import { filterCards } from "@/lib/optcg";
+import { filterCards, sortCardsNewestFirst } from "@/lib/optcg";
 import { buildCardIndex } from "@/lib/suggestions";
 
 // Deck-in-progress is saved to the browser's localStorage under
@@ -30,7 +30,10 @@ import { buildCardIndex } from "@/lib/suggestions";
 // lib/deck.js for the deck shape.
 
 export default function DeckBuilder() {
-  const { allCards, status } = useCards();
+  const { allCards: rawCards, status } = useCards();
+  // Newest sets first (see sortCardsNewestFirst in lib/optcg.js). Sorted
+  // once here, and every list below keeps this order.
+  const allCards = useMemo(() => sortCardsNewestFirst(rawCards), [rawCards]);
   const {
     filters,
     setFilters,
