@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { hasUnlimitedCopies } from "@/lib/deck";
+import { getBlock, powerValue } from "@/lib/blocks";
 
 /**
  * Renders a grid of card images. Kept dumb on purpose — it just takes
@@ -102,6 +103,10 @@ export default function CardGrid({ cards, builder, collection }) {
               <p className="text-neutral-500 dark:text-neutral-400">
                 {card.card_set_id} &middot; {card.card_color}
                 {card.card_type ? ` · ${card.card_type}` : ""}
+              </p>
+              <p className="text-neutral-500 dark:text-neutral-400">
+                Block {getBlock(card) ?? "?"}
+                {powerValue(card) !== null && ` · ${powerValue(card)} power`}
               </p>
               {hasUnlimitedCopies(card) && (
                 <p className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400">

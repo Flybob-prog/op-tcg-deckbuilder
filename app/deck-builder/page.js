@@ -7,7 +7,7 @@ import DeckPanel from "@/components/DeckPanel";
 import DeckImport from "@/components/DeckImport";
 import SuggestionsPanel from "@/components/SuggestionsPanel";
 import { useCards } from "@/hooks/useCards";
-import { useCardFilters } from "@/hooks/useCardFilters";
+import { sortCardList, useCardFilters } from "@/hooks/useCardFilters";
 import { useCollection } from "@/hooks/useCollection";
 import {
   addCard,
@@ -43,6 +43,7 @@ export default function DeckBuilder() {
     costOptions,
     printTagOptions,
     rarityOptions,
+    blockOptions,
   } = useCardFilters(allCards);
 
   const [deck, setDeck] = useState(createEmptyDeck());
@@ -142,8 +143,11 @@ export default function DeckBuilder() {
   // leftover "Character" type filter can't leave the list empty.
   const gridCards =
     step === "leader"
-      ? filterCards(allCards, { ...filters, type: "" }).filter(
-          (card) => card.card_type === "Leader" && ownedOk(card)
+      ? sortCardList(
+          filterCards(allCards, { ...filters, type: "" }).filter(
+            (card) => card.card_type === "Leader" && ownedOk(card)
+          ),
+          filters.sort
         )
       : filteredCards.filter(
           (card) => isPlayableWithLeader(deck.leader, card) && ownedOk(card)
@@ -266,6 +270,7 @@ export default function DeckBuilder() {
               costOptions={costOptions}
               printTagOptions={printTagOptions}
               rarityOptions={rarityOptions}
+              blockOptions={blockOptions}
               resultCount={gridCards.length}
             />
             <label className="flex w-fit items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">

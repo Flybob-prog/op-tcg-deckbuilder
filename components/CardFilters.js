@@ -1,5 +1,7 @@
 "use client";
 
+import { EMPTY_FILTERS, SORT_OPTIONS } from "@/hooks/useCardFilters";
+
 /**
  * Controlled filter bar: name/trait search + color/cost/type dropdowns.
  * All state lives in the parent (app/page.js) — this component just
@@ -21,6 +23,7 @@ export default function CardFilters({
   costOptions,
   printTagOptions,
   rarityOptions,
+  blockOptions = [],
   resultCount,
 }) {
   function update(field, value) {
@@ -28,15 +31,7 @@ export default function CardFilters({
   }
 
   function clearAll() {
-    onChange({
-      name: "",
-      color: "",
-      cost: "",
-      type: "",
-      trait: "",
-      printTag: "",
-      rarity: "",
-    });
+    onChange(EMPTY_FILTERS);
   }
 
   const hasActiveFilters =
@@ -46,7 +41,9 @@ export default function CardFilters({
     filters.type ||
     filters.trait ||
     filters.printTag ||
-    filters.rarity;
+    filters.rarity ||
+    filters.block ||
+    filters.sort;
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
@@ -162,6 +159,43 @@ export default function CardFilters({
             {rarityOptions.map((r) => (
               <option key={r} value={r}>
                 {r}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {blockOptions.length > 0 && (
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-neutral-700 dark:text-neutral-300">
+              Block
+            </span>
+            <select
+              value={filters.block ?? ""}
+              onChange={(e) => update("block", e.target.value)}
+              className="rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800"
+            >
+              <option value="">Any</option>
+              {blockOptions.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium text-neutral-700 dark:text-neutral-300">
+            Sort by
+          </span>
+          <select
+            value={filters.sort ?? ""}
+            onChange={(e) => update("sort", e.target.value)}
+            className="rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800"
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
               </option>
             ))}
           </select>

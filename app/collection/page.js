@@ -35,6 +35,7 @@ export default function CollectionPage() {
     costOptions,
     printTagOptions,
     rarityOptions,
+    blockOptions,
   } = useCardFilters(allCards);
 
   const {
@@ -146,6 +147,7 @@ export default function CollectionPage() {
                 costOptions={costOptions}
                 printTagOptions={printTagOptions}
                 rarityOptions={rarityOptions}
+              blockOptions={blockOptions}
                 resultCount={filteredCards.length}
               />
               <CardGrid cards={filteredCards} collection={collectionControls} />

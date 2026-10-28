@@ -8,6 +8,7 @@ import {
   KNOWN_PRINT_TAGS,
   KNOWN_RARITIES,
 } from "@/lib/optcg";
+import { blockOptions as getBlockOptions, blockSortValue, powerValue } from "@/lib/blocks";
 
 export const EMPTY_FILTERS = {
   name: "",
@@ -17,7 +18,39 @@ export const EMPTY_FILTERS = {
   trait: "",
   printTag: "",
   rarity: "",
+  block: "",
+  sort: "",
 };
+
+// "Sort by" choices. "" keeps the page's own order (newest set first).
+export const SORT_OPTIONS = [
+  { value: "", label: "Newest set" },
+  { value: "block-desc", label: "Block (newest first)" },
+  { value: "block-asc", label: "Block (oldest first)" },
+  { value: "power-desc", label: "Power (high to low)" },
+  { value: "power-asc", label: "Power (low to high)" },
+];
+
+// Cards without a value (no block known, or no power, e.g. Events) always
+// go last, whichever direction is chosen. Array.prototype.sort is stable,
+// so ties keep the page's newest-set-first order.
+export function sortCardList(cards, sort) {
+  if (!sort) return cards;
+  const [field, dir] = sort.split("-");
+  const value =
+    field === "block"
+      ? (c) => (blockSortValue(c) === Infinity ? null : blockSortValue(c))
+      : powerValue;
+  const sign = dir === "asc" ? 1 : -1;
+  return [...cards].sort((a, b) => {
+    const va = value(a);
+    const vb = value(b);
+    if (va === null && vb === null) return 0;
+    if (va === null) return 1;
+    if (vb === null) return -1;
+    return (va - vb) * sign;
+  });
+}
 
 function uniqueSorted(values) {
   return Array.from(new Set(values.filter(Boolean))).sort();
@@ -36,9 +69,11 @@ export function useCardFilters(allCards) {
   // see the note in lib/optcg.js about why we don't hit a "filtered"
   // endpoint per keystroke.
   const filteredCards = useMemo(
-    () => filterCards(allCards, filters),
+    () => sortCardList(filterCards(allCards, filters), filters.sort),
     [allCards, filters]
   );
+
+  const blockOptions = useMemo(() => getBlockOptions(allCards), [allCards]);
 
   const colorOptions = useMemo(() => {
     const found = new Set(
@@ -89,5 +124,6 @@ export function useCardFilters(allCards) {
     costOptions,
     printTagOptions,
     rarityOptions,
+    blockOptions,
   };
 }

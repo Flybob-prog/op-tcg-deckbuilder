@@ -20,6 +20,7 @@ export default function Home() {
     costOptions,
     printTagOptions,
     rarityOptions,
+    blockOptions,
   } = useCardFilters(allCards);
 
   return (
@@ -53,6 +54,7 @@ export default function Home() {
             costOptions={costOptions}
             printTagOptions={printTagOptions}
             rarityOptions={rarityOptions}
+              blockOptions={blockOptions}
             resultCount={filteredCards.length}
           />
           <CardGrid cards={filteredCards} />
